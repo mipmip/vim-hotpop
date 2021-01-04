@@ -1,6 +1,16 @@
+if (exists('g:loaded_hotpop') && g:loaded_hotpop) || &cp
+   "finish
+endif
+
+let g:loaded_hotpop = 1
+
 let g:hotpopMappings = {}
 let g:hotpopChapters = []
-function! Hotmap(map_mode, map_special, key_sequence, command, help_chapter, help_description)
+
+function! hotpop#init()
+endfunction
+
+function! HotpopMap(map_mode, map_special, key_sequence, command, help_chapter, help_description)
 
   if !has_key(g:hotpopMappings, a:help_chapter)
     let g:hotpopMappings[a:help_chapter]=[]
@@ -25,7 +35,7 @@ function! s:popup_filter(winid, key)
     return v:false
 endfunction
 
-function! Hotpop()
+function! HotpopShow()
   let rows = []
 
   call add(rows, "scroll with j and k and close with 'q'")
@@ -42,6 +52,7 @@ function! Hotpop()
 
   endfor
 
-  let winid = popup_create(rows, #{ title: ' My Mappings ', padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), close: 'click' })
+  let winid = popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), close: 'click' })
+
 endfunction
 
