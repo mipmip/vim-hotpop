@@ -4,10 +4,9 @@ endif
 
 let g:loaded_hotpop = 1
 
+function! hotpop#init()
 let g:hotpopMappings = {}
 let g:hotpopChapters = []
-
-function! hotpop#init()
 endfunction
 
 function! HotpopMap(map_mode, map_special, key_sequence, command, help_chapter, help_description)
