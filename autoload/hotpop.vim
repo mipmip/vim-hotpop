@@ -18,10 +18,16 @@ function! HotpopMap(map_mode, map_special, key_sequence, command, help_chapter, 
 
   call add(g:hotpopMappings[a:help_chapter], [a:map_mode, a:map_special, a:key_sequence, a:help_description])
 
-  execute a:map_mode . ' ' . a:map_special . ' ' a:key_sequence. ' ' . a:command
+  "WHEN EMPTY DONT MAP, JUST SHOW IN HELP
+  if a:command == ''
+  else
+    execute a:map_mode . ' ' . a:map_special . ' ' a:key_sequence. ' ' . a:command
+  endif
+
 endfunction
 
 function! s:popup_filter(winid, key)
+  echo a:key
     if a:key ==# "k"
         call win_execute(a:winid, "normal! \<c-y>")
         return v:true
