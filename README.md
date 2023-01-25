@@ -24,7 +24,7 @@ call HotpopMap('map',  '',        ':help 42',  '',                         'Most
 ```
 
 **NOTE** Keeping `COMMAND` empty skips the remapping. This is useful for
-mappings you just have in your cheatsheet.
+existing mappings you just want to show in your cheatsheet.
 
 # Installation
 
