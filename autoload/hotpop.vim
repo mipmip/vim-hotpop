@@ -28,6 +28,14 @@ function! s:popup_filter(winid, key)
     elseif a:key ==# "j"
         call win_execute(a:winid, "normal! \<c-e>")
         return v:true
+    elseif a:key ==# ""
+        call win_execute(a:winid, "normal! \<c-b>")
+        return v:true
+    elseif a:key ==# ""
+        call win_execute(a:winid, "normal! \<c-f>")
+        return v:true
+    elseif a:key ==# ''
+        return popup_filter_menu(a:winid, 'x')
     elseif a:key ==# 'q'
         return popup_filter_menu(a:winid, 'x')
     endif
@@ -37,8 +45,9 @@ endfunction
 function! HotpopShow()
   let rows = []
 
-  call add(rows, "scroll with j and k and close with 'q'")
-  call add(rows, '')
+  call add(rows, "                                               Scroll lines: <j> and <k>")
+  call add(rows, "                                               Scroll pages: <C-f> and <C-b>")
+  call add(rows, "                                               Close:        <q> or <Esc>")
 
   for chapter in g:hotpopChapters
     call add(rows, '' . toupper(chapter))
@@ -51,7 +60,7 @@ function! HotpopShow()
 
   endfor
 
-  let winid = popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), close: 'click' })
+  let winid = popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), filtermode: 'n', mapping: 0, close: 'click' })
 
 endfunction
 
