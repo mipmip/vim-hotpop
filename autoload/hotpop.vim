@@ -26,6 +26,14 @@ function! HotpopMap(map_mode, map_special, key_sequence, command, help_chapter, 
 
 endfunction
 
+function! hotpop#popup_create(what, options) abort
+    if has('popupwin')
+        return popup_create(a:what, a:options)
+    elseif has('nvim')
+        return s:floatwin(s:to_list(a:what), s:options(#{}, a:options))
+    endif
+endfunction
+
 function! s:popup_filter(winid, key)
   echo a:key
     if a:key ==# "k"
@@ -66,7 +74,7 @@ function! HotpopShow()
 
   endfor
 
-  let winid = popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), filtermode: 'n', mapping: 0, close: 'click' })
+  let winid = hotpop#popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), filtermode: 'n', mapping: 0, close: 'click' })
 
 endfunction
 
