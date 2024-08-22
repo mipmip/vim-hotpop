@@ -34,6 +34,114 @@ function! hotpop#popup_create(what, options) abort
     endif
 endfunction
 
+
+function! s:popup_filter(winid, key)
+  echo a:key
+    if a:key ==# "k"
+        call win_execute(a:winid, "normal! \<c-y>")
+        return v:true
+    elseif a:key ==# "j"
+        call win_execute(a:winid, "normal! \<c-e>")
+        return v:true
+    elseif a:key ==# ""
+        call win_execute(a:winid, "normal! \<c-b>")
+        return v:true
+    elseif a:key ==# ""
+        call win_execute(a:winid, "normal! \<c-f>")
+        return v:true
+    elseif a:key ==# ''
+        return popup_filter_menu(a:winid, 'x')
+    elseif a:key ==# 'q'
+        return popup_filter_menu(a:winid, 'x')
+    endif
+    return v:false
+endfunction
+
+function! HotpopShow()
+  let rows = []
+
+  call add(rows, "                                               Scroll lines: <j> and <k>")
+  call add(rows, "                                               Scroll pages: <C-f> and <C-b>")
+  call add(rows, "                                               Close:        <q> or <Esc>")
+
+  for chapter in g:hotpopChapters
+    call add(rows, '' . toupper(chapter))
+    call add(rows, repeat('-', len(chapter)))
+
+   for mapping in g:hotpopMappings[chapter]
+      call add(rows, mapping[2] . repeat(' ', 20 - len(mapping[2])) . mapping[3])
+    endfor
+    call add(rows, '')
+
+  endfor
+
+  let winid = hotpop#popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), filtermode: 'n', mapping: 0, close: 'click' })
+
+endfunction
+
+
+
+
+
+" THE REST FOR NEOVIM ONLY
+if !has('nvim')
+    finish
+endif
+
+function s:options(opts, useropts) abort
+    call extend(extend(a:opts, a:useropts), #{
+        \ line: 0, col: 0, pos: 'topleft', posinvert: v:true, textprop: '',
+        \ textpropwin: 0, textpropid: 0, fixed: v:false, flip: v:true, maxheight: 999,
+        \ minheight: 0, maxwidth: 999, minwidth: 0, firstline: 0, hidden: v:false,
+        \ tabpage: 0, title: '', wrap: v:true, drag: v:false, resize: v:false,
+        \ close: 'none', highlight: '', padding: [0, 0, 0, 0], border: [0, 0, 0, 0],
+        \ borderhighlight: [], borderchars: [], scrollbar: v:true,
+        \ scrollbarhighlight: '', thumbhighlight: '', zindex: 50, mask: [], time: 0,
+        \ moved: [0, 0, 0], mousemoved: [0, 0, 0], cursorline: v:false, filter: {},
+        \ mapping: v:true, filtermode: 'a', callback: v:null, box: 0, result: 0
+        \ }, 'keep')
+
+    " set defaults suitable for Neovim
+    if a:opts.pos is# 'center'
+        let a:opts.line = 0
+        let a:opts.col = 0
+    endif
+    let a:opts.highlight = empty(a:opts.highlight) ?
+        \ 'EndOfBuffer:,CursorLine:PMenuSel' :
+        \ printf('NormalFloat:%s,EndOfBuffer:,CursorLine:PMenuSel', a:opts.highlight)
+    let a:opts.padding += [1, 1, 1, 1]
+    let a:opts.border += [1, 1, 1, 1]
+    if len(a:opts.borderchars) == 1
+        let a:opts.borderchars = repeat(a:opts.borderchars, 8)
+    elseif len(a:opts.borderchars) == 2
+        let a:opts.borderchars = repeat(a:opts.borderchars[0:0], 4) +
+            \ repeat(a:opts.borderchars[1:1], 4)
+    elseif len(a:opts.borderchars) < 8
+        let a:opts.borderchars += [nr2char(0x2550), nr2char(0x2551), nr2char(0x2550),
+            \ nr2char(0x2551), nr2char(0x2554), nr2char(0x2557), nr2char(0x255D),
+            \ nr2char(0x255A)][len(a:opts.borderchars) : ]
+    endif
+    if a:opts.filter is# 'popup_filter_menu'
+        let a:opts.filter = {'<Space>': '.', '<CR>': '.', '<kEnter>': '.',
+            \ '<2-LeftMouse>': '.', 'x': -1, '<Esc>': -1, '<C-C>': -1}
+    elseif a:opts.filter is# 'popup_filter_yesno'
+        let a:opts.filter = {'y': 1, 'Y': 1, 'n': 0, 'N': 0, 'x': 0, '<Esc>': 0,
+            \ '<C-C>': -1}
+    elseif type(a:opts.filter) != v:t_dict
+        let a:opts.filter = {}
+    endif
+    if a:opts.filtermode is# 'a'
+        let a:opts.filtermode = ''
+    endif
+    if a:opts.close is# 'button'
+        let a:opts.borderchars[5] = 'X'
+    elseif a:opts.close is# 'click'
+        let a:opts.filter['<LeftMouse>'] = -2
+    endif
+
+    return a:opts
+endfunction
+
 function s:to_list(what) abort
     if type(a:what) == v:t_number
         return getbufline(a:what, 1, '$')
@@ -99,49 +207,88 @@ function s:floatwin(lines, opts) abort
     return l:id
 endfunction
 
-
-
-function! s:popup_filter(winid, key)
-  echo a:key
-    if a:key ==# "k"
-        call win_execute(a:winid, "normal! \<c-y>")
-        return v:true
-    elseif a:key ==# "j"
-        call win_execute(a:winid, "normal! \<c-e>")
-        return v:true
-    elseif a:key ==# ""
-        call win_execute(a:winid, "normal! \<c-b>")
-        return v:true
-    elseif a:key ==# ""
-        call win_execute(a:winid, "normal! \<c-f>")
-        return v:true
-    elseif a:key ==# ''
-        return popup_filter_menu(a:winid, 'x')
-    elseif a:key ==# 'q'
-        return popup_filter_menu(a:winid, 'x')
+function s:bufleave(buf) abort
+    let l:opts = getbufvar(a:buf, 'popup_options')
+    if !empty(l:opts.callback)
+        " delay callback until another buffer entered
+        let s:callback = function(l:opts.callback, [bufwinid(a:buf),
+            \ type(l:opts.result) == v:t_string ? line(l:opts.result) : l:opts.result])
+        autocmd BufEnter * ++once ++nested call call(remove(s:, 'callback'), [])
     endif
-    return v:false
+    execute bufwinnr(a:buf) 'hide'
+    execute bufwinnr(l:opts.box) 'hide'
 endfunction
 
-function! HotpopShow()
-  let rows = []
+function s:centered(size, total, far) abort
+    return (a:far ? a:total + a:size : a:total - a:size) / 2
+endfunction
 
-  call add(rows, "                                               Scroll lines: <j> and <k>")
-  call add(rows, "                                               Scroll pages: <C-f> and <C-b>")
-  call add(rows, "                                               Close:        <q> or <Esc>")
+function s:draw_box(height, width, opts) abort
+    let l:border31 = a:opts.border[3] + a:opts.border[1]
+    let l:contents = repeat([printf('%.*S%*S%.*S',
+        \ a:opts.border[3], a:opts.borderchars[3], a:width - l:border31, '',
+        \ a:opts.border[1], a:opts.borderchars[1])],
+        \ a:height - a:opts.border[0] - a:opts.border[2])
+    if a:opts.border[0]
+        call insert(l:contents, printf('%.*S%S%S%.*S',
+            \ a:opts.border[3], a:opts.borderchars[4], a:opts.title,
+            \ repeat(a:opts.borderchars[0],
+            \   a:width - l:border31 - strwidth(a:opts.title)),
+            \ a:opts.border[1], a:opts.borderchars[5]))
+    endif
+    if a:opts.border[2]
+        call add(l:contents, printf('%.*S%S%.*S',
+            \ a:opts.border[3], a:opts.borderchars[7],
+            \ repeat(a:opts.borderchars[2], a:width - l:border31),
+            \ a:opts.border[1], a:opts.borderchars[6]))
+    endif
+    return l:contents
+endfunction
 
-  for chapter in g:hotpopChapters
-    call add(rows, '' . toupper(chapter))
-    call add(rows, repeat('-', len(chapter)))
+" find hidden buffer by looking up variable
+" create new if not found
+function s:get_buffer(varname, value) abort
+    let l:match = filter(getbufinfo({'bufloaded': v:true}),
+        \ {_, v -> empty(v.windows) && has_key(v.variables, a:varname) &&
+        \ type(v.variables[a:varname]) == type(a:value)})
+    let l:buf = empty(l:match) ? nvim_create_buf(v:false, v:true) : l:match[0].bufnr
+    call nvim_buf_set_option(l:buf, 'undolevels', -1)
+    call setbufvar(l:buf, a:varname, a:value)
+    return l:buf
+endfunction
 
-   for mapping in g:hotpopMappings[chapter]
-      call add(rows, mapping[2] . repeat(' ', 20 - len(mapping[2])) . mapping[3])
+function s:set_keymaps(window, mode, keymaps) abort
+    for [l:lhs, l:result] in items(a:keymaps)
+        call nvim_buf_set_keymap(winbufnr(a:window), a:mode, l:lhs,
+            \ printf('<Cmd>call popup#close(%d, %s)<CR>', a:window, string(l:result)),
+            \ {'noremap': v:true, 'nowait': v:true})
     endfor
-    call add(rows, '')
-
-  endfor
-
-  let winid = hotpop#popup_create(rows, #{ title: ' My Mappings ', minwidth: 70, maxheight: 30, padding: [1,2,1,2], border: [], filter: function('s:popup_filter'), filtermode: 'n', mapping: 0, close: 'click' })
-
 endfunction
 
+function s:set_lines(buf, lines) abort
+    call nvim_buf_set_option(a:buf, 'modifiable', v:true)
+    call nvim_buf_set_lines(a:buf, 0, -1, 1, a:lines)
+    call nvim_buf_set_option(a:buf, 'modifiable', v:false)
+endfunction
+
+function s:set_winopts(window, winopts) abort
+    for [l:name, l:value] in items(a:winopts)
+        call nvim_win_set_option(a:window, l:name, l:value)
+    endfor
+endfunction
+
+function s:shift_inside(anchor, opts) abort
+    if a:anchor is# 'NE'
+        return [a:opts.border[0] + a:opts.padding[0],
+            \ -a:opts.border[1] - a:opts.padding[1]]
+    elseif a:anchor is# 'SE'
+        return [-a:opts.border[2] - a:opts.padding[2],
+            \ -a:opts.border[1] - a:opts.padding[1]]
+    elseif a:anchor is# 'SW'
+        return [-a:opts.border[2] - a:opts.padding[2],
+            \ a:opts.border[3] + a:opts.padding[3]]
+    else "NW
+        return [a:opts.border[0] + a:opts.padding[0],
+            \ a:opts.border[3] + a:opts.padding[3]]
+    endif
+endfunction
